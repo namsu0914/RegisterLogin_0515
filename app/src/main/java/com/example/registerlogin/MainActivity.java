@@ -1,12 +1,12 @@
 package com.example.registerlogin;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.TextView;
 import android.widget.Button;
+import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -25,7 +25,12 @@ public class MainActivity extends AppCompatActivity {
         btn_enroll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, FingerprintActivity.class);
+                Intent intent = getIntent();
+                String userID = intent.getStringExtra("userID");
+
+                intent = new Intent(MainActivity.this, BiometricActivity.class);
+
+                intent.putExtra("userID", userID);
                 startActivity(intent);
             }
         });
@@ -33,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         String userID = intent.getStringExtra("userID");
-        String userPass = intent.getStringExtra("userPass");
+        //String userPass = intent.getStringExtra("userPass");
 
         tv_id.setText(userID);
         //tv_pass.setText(userPass);

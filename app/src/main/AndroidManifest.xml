@@ -28,9 +28,8 @@
             android:name=".MainActivity"
             android:exported="false"/>
         <activity
-            android:name=".FingerprintActivity"
-            android:exported="false">
-        </activity>
+            android:name=".BiometricActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

@@ -1,7 +1,5 @@
 package com.example.registerlogin;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
@@ -9,6 +7,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -42,7 +42,7 @@ public class RegisterActivity extends AppCompatActivity {
                 String userID = et_id.getText().toString();
                 String userPass = et_pass.getText().toString();
                 String userName = et_name.getText().toString();
-                int userAge=Integer.parseInt((et_age.getText().toString()));
+                String userAge=(et_age.getText().toString());
 
                 Response.Listener<String> responseListner = new Response.Listener<String>() {
                     @Override
@@ -59,6 +59,7 @@ public class RegisterActivity extends AppCompatActivity {
                                 return;
                             }
                         } catch (JSONException e) {
+                            Toast.makeText(getApplicationContext(), "오류가 발생하였습니다. ", Toast.LENGTH_SHORT).show();
                             throw new RuntimeException(e);
                         }
                     }
