@@ -57,7 +57,7 @@ public class BiometricActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_fingerprint);
+        setContentView(R.layout.activity_biometric);
 
         authenticationCallback = new BiometricPrompt.AuthenticationCallback() {
 
@@ -70,45 +70,13 @@ public class BiometricActivity extends AppCompatActivity {
             @Override
             public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
                 super.onAuthenticationSucceeded(result);
-                notifyUser("성공이다 성공이야~~ 아잉 신나");
+                notifyUser("인증에 성공하였습니다");
                 // 처리를 진행하세요
-                generateKeyPair();
+                //generateKeyPair();
 
                 // 키 쌍 생성 확인 코드 추가
                 checkKeyPairExistence();
 
-                Response.Listener<String> responseListner = new Response.Listener<String>() {
-                    @Override
-
-
-                    public void onResponse(String response) {
-                        try {
-                            JSONObject jsonObject= new JSONObject(response);
-                            boolean success= jsonObject.getBoolean("success"); // 서버통신 잘 됐냐?
-                            if (success) {
-                                Toast.makeText(getApplicationContext(), "서버통신성공", Toast.LENGTH_SHORT).show();
-                                Intent intent= new Intent(BiometricActivity.this, BiometricActivity.class); //성공 후 열 페이지
-                                startActivity(intent);
-                            }else{
-                                Toast.makeText(getApplicationContext(), "서버 실패", Toast.LENGTH_SHORT).show();
-                                return;
-                            }
-                        } catch (JSONException e) {
-                            Toast.makeText(getApplicationContext(), "오류 발생", Toast.LENGTH_SHORT).show();
-                            throw new RuntimeException(e);
-                        }
-                    }
-                };
-                //db로 공개키 전송
-                Intent intent = getIntent();
-                String userID = intent.getStringExtra("userID");
-
-                Log.d(TAG, "ID"+ userID);
-
-                SavePKRequest savepkRequest = new SavePKRequest(publicKey,userID, responseListner);
-                RequestQueue queue = Volley.newRequestQueue(BiometricActivity.this);
-                queue.add(savepkRequest);
-                Toast.makeText(getApplicationContext(), "pk 저장 완.", Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -153,9 +121,11 @@ public class BiometricActivity extends AppCompatActivity {
                 publicKey = privateKeyEntry.getCertificate().getPublicKey();
                 // 공개 키와 개인 키 출력
                 Log.d(TAG, "Public Key: " + Base64.encodeToString(publicKey.getEncoded(),Base64.DEFAULT));
+                Toast.makeText(getApplicationContext(), "이미 저장된 생체정보입니다. ", Toast.LENGTH_SHORT).show();
             } else {
                 // 키 쌍이 존재하지 않음
                 Log.d(TAG, "Key pair not found");
+                generateKeyPair();
             }
         } catch (NoSuchAlgorithmException | CertificateException | IOException | KeyStoreException | UnrecoverableEntryException e) {
             e.printStackTrace();
@@ -179,6 +149,39 @@ public class BiometricActivity extends AppCompatActivity {
                 KeyPair keyPair = keyPairGenerator.generateKeyPair();
                 //publicKey = keyPair.getPublic();
             }
+            //키 생성하면 바로 db에 저장(listener 생성)
+            Response.Listener<String> responseListner = new Response.Listener<String>() {
+                @Override
+
+
+                public void onResponse(String response) {
+                    try {
+                        JSONObject jsonObject= new JSONObject(response);
+                        boolean success= jsonObject.getBoolean("success"); // 서버통신 잘 됐냐?
+                        if (success) {
+                            Toast.makeText(getApplicationContext(), "서버통신성공", Toast.LENGTH_SHORT).show();
+                            Intent intent= new Intent(BiometricActivity.this, BiometricActivity.class); //성공 후 열 페이지
+                            startActivity(intent);
+                        }else{
+                            Toast.makeText(getApplicationContext(), "서버 실패", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                    } catch (JSONException e) {
+                        Toast.makeText(getApplicationContext(), "오류 발생", Toast.LENGTH_SHORT).show();
+                        throw new RuntimeException(e);
+                    }
+                }
+            };
+            //db로 공개키 전송
+            Intent intent = getIntent();
+            String userID = intent.getStringExtra("userID");
+
+            Log.d(TAG, "ID"+ userID);
+
+            SavePKRequest savepkRequest = new SavePKRequest(publicKey,userID, responseListner);
+            RequestQueue queue = Volley.newRequestQueue(BiometricActivity.this);
+            queue.add(savepkRequest);
+            Toast.makeText(getApplicationContext(), "공개키 저장이 완료되었습니다. ", Toast.LENGTH_SHORT).show();
 
 
         } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidAlgorithmParameterException
