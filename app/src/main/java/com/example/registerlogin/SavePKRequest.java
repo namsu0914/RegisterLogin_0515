@@ -12,18 +12,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SavePKRequest extends StringRequest{
-    final static private String URL = "http://192.168.0.5:80/SavePK.php";
+    final static private String URL = "http://192.168.0.4:80/SavePK.php";
     final private Map<String , String> map;
 
-    public SavePKRequest(PublicKey publicKey,String userID, Response.Listener<String> listener){
+    public SavePKRequest(String publicKey,String userID, Response.Listener<String> listener){
         super(Request.Method.POST, URL, listener, null);
 
         map= new HashMap<>();
         map.put("userID", userID);
-        map.put("publicKey",Base64.encodeToString(publicKey.getEncoded(),Base64.DEFAULT));
+        map.put("publicKey",publicKey);
 
     }
-    protected Map<String, String> getParams() throws AuthFailureError {
-        return map;
-    }
+
 }
