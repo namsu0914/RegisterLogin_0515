@@ -31,6 +31,12 @@ android {
 }
 
 dependencies {
+    def room_version = "2.5.0"
+
+    //noinspection GradleDependency
+    implementation "androidx.room:room-runtime:$room_version"
+    debugImplementation 'com.amitshekhar.android:debug-db:1.0.6'
+    annotationProcessor "androidx.room:room-compiler:$room_version"
 
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.5'
     implementation 'com.squareup.okhttp3:okhttp:4.9.1'

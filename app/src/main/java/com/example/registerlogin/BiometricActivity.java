@@ -3,6 +3,7 @@ package com.example.registerlogin;
 
 import android.annotation.TargetApi;
 import android.app.KeyguardManager;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -16,10 +17,13 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.room.Room;
 
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -39,6 +43,7 @@ import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.UnrecoverableEntryException;
 import java.security.cert.CertificateException;
+import java.util.Objects;
 
 public class BiometricActivity extends AppCompatActivity {
 
@@ -50,7 +55,10 @@ public class BiometricActivity extends AppCompatActivity {
     private KeyStore keyStore;
     private PublicKey publicKey;
     public KeyPair pair;
+    private DBHelper dbHelper;
     private static final String TAG = "BiometricActivity";
+
+    //db인스턴스 생성
 
     @TargetApi(Build.VERSION_CODES.P)
     @Override
@@ -110,7 +118,7 @@ public class BiometricActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         String userID = intent.getStringExtra("userID");
-
+        Log.d(TAG, "UserID: " + userID);
         Response.Listener<String> responseListner= new Response.Listener<String>() {
 
             @Override
@@ -120,7 +128,7 @@ public class BiometricActivity extends AppCompatActivity {
                     //boolean success= jsonObject.getBoolean("success"); // 서버통신 잘 됐냐?
                     //String publicKey = jsonObject.getString("publicKey");
                     String publicKey = response;
-                    if ((publicKey.length() > 5)) {
+                    if (publicKey.length() > 10) {
                         // 공개 키와 개인 키 출력
                         //String publicKey = jsonObject.getString("publicKey");
                         Log.d(TAG, "Public Key: " + publicKey);
@@ -188,6 +196,7 @@ public class BiometricActivity extends AppCompatActivity {
             public void onResponse(String response) {
                 try {
                     JSONObject jsonObject= new JSONObject(response);
+
                     boolean success= jsonObject.getBoolean("success"); // 서버통신 잘 됐냐?
                     if (success) {
                         Toast.makeText(getApplicationContext(), "서버통신성공", Toast.LENGTH_SHORT).show();
@@ -203,9 +212,16 @@ public class BiometricActivity extends AppCompatActivity {
                 }
             }
         };
+
             //db로 공개키 전송
         Intent intent = getIntent();
         String userID = intent.getStringExtra("userID");
+
+        dbHelper = new DBHelper(this);
+        // 데이터베이스에 사용자 정보 저장 예시
+        saveUser(userID, privateKeyString);
+        // 데이터베이스에서 사용자 정보 조회 예시
+        
 
         Log.d(TAG, "ID: "+ userID);
         SavePKRequest savepkRequest = new SavePKRequest(publicKeyString,userID, responseListner);
@@ -241,5 +257,15 @@ public class BiometricActivity extends AppCompatActivity {
 
     private void notifyUser(String message) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+    //db 저장 함수
+    private void saveUser(String userID, String sk) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put("userID", userID);
+        values.put("sk", sk);
+
+        long newRowId = db.insert("sk", null, values);
     }
 }

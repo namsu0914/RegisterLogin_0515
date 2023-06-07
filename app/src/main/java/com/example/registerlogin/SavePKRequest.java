@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SavePKRequest extends StringRequest{
-    final static private String URL = "http://192.168.0.4:80/SavePK.php";
+    final static private String URL = "http://192.168.0.5:80/SavePK.php";
     final private Map<String , String> map;
 
     public SavePKRequest(String publicKey,String userID, Response.Listener<String> listener){
@@ -22,6 +22,9 @@ public class SavePKRequest extends StringRequest{
         map.put("userID", userID);
         map.put("publicKey",publicKey);
 
+    }
+    protected Map<String, String> getParams() throws AuthFailureError {
+        return map;
     }
 
 }
