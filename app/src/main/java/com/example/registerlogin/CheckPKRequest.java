@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CheckPKRequest extends StringRequest {
-    final static private String URL = "http://192.168.0.4:80/CheckPK.php";
+    final static private String URL = "http://192.168.0.5:80/CheckPK.php";
     private Map<String ,String > map;
 
     public CheckPKRequest(String userID, Response.Listener<String> listener){

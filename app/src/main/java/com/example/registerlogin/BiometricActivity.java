@@ -23,6 +23,7 @@ import androidx.core.app.ActivityCompat;
 
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
+import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
 
 import org.json.JSONException;
@@ -51,6 +52,8 @@ public class BiometricActivity extends AppCompatActivity {
     private PublicKey publicKey;
     public KeyPair pair;
     private static final String TAG = "BiometricActivity";
+    //Intent intent = getIntent();
+    //String userID = intent.getStringExtra("userID");
 
     @TargetApi(Build.VERSION_CODES.P)
     @Override
@@ -107,10 +110,10 @@ public class BiometricActivity extends AppCompatActivity {
 
     }
     private void checkKeyPairExistence() {
-
+        //Toast.makeText(getApplicationContext(), "있는지 확인 중", Toast.LENGTH_SHORT).show();
         Intent intent = getIntent();
         String userID = intent.getStringExtra("userID");
-
+        Log.d(TAG, "User ID: " + userID);
         Response.Listener<String> responseListner= new Response.Listener<String>() {
 
             @Override
@@ -139,23 +142,6 @@ public class BiometricActivity extends AppCompatActivity {
         RequestQueue queue = Volley.newRequestQueue(BiometricActivity.this);
         queue.add(checkpkrequest);
 
-//            keyStore = KeyStore.getInstance("AndroidKeyStore");
-//            keyStore.load(null);
-//
-//            if (keyStore.containsAlias(KEY_NAME)) {
-//                // 키 쌍이 존재함
-//                KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) keyStore.getEntry(KEY_NAME, null);
-//                publicKey = privateKeyEntry.getCertificate().getPublicKey();
-//                keyStore.deleteEntry(KEY_NAME);
-//                // 공개 키와 개인 키 출력
-//                Log.d(TAG, "Public Key: " + Base64.encodeToString(publicKey.getEncoded(),Base64.DEFAULT));
-//                Toast.makeText(getApplicationContext(), "이미 저장된 생체정보입니다. ", Toast.LENGTH_SHORT).show();
-//                //generateKeyPair();
-//            } else {
-//                // 키 쌍이 존재하지 않음
-//                Log.d(TAG, "Key pair not found");
-//                generateKeyPair();
-//            }
     }
 
     private void generateKeyPair() throws NoSuchAlgorithmException {
@@ -170,49 +156,44 @@ public class BiometricActivity extends AppCompatActivity {
         // 공개키 획득
         PublicKey publicKey = pair.getPublic();
 
-        // 공개키를 문자열로 출력
-        String publicKeyString = Base64.encodeToString(publicKey.getEncoded(),Base64.DEFAULT);
+        sendPublicKeyToServer(publicKey);
 
-        //System.out.println("public key = "+ publicKeyString);
-        Log.d(TAG, "공개키: "+publicKeyString);
-        // 개인키 획득
-        PrivateKey privateKey = pair.getPrivate();
-        // 개인키를 문자열로 출력
-        String privateKeyString = Base64.encodeToString(privateKey.getEncoded(), Base64.DEFAULT);
-
-        //System.out.println("private key = "+ privateKeyString);
-        Log.d(TAG, "비밀키: "+ privateKeyString);
-
-        Response.Listener<String> responseListner = new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                try {
-                    JSONObject jsonObject= new JSONObject(response);
-                    boolean success= jsonObject.getBoolean("success"); // 서버통신 잘 됐냐?
-                    if (success) {
-                        Toast.makeText(getApplicationContext(), "서버통신성공", Toast.LENGTH_SHORT).show();
-                        Intent intent= new Intent(BiometricActivity.this, BiometricActivity.class); //성공 후 열 페이지
-                        startActivity(intent);
-                    }else{
-                        Toast.makeText(getApplicationContext(), "서버 실패", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                } catch (JSONException e) {
-                    Toast.makeText(getApplicationContext(), "오류 발생", Toast.LENGTH_SHORT).show();
-                    throw new RuntimeException(e);
-                }
-            }
-        };
-            //db로 공개키 전송
+    }
+    private void sendPublicKeyToServer(PublicKey publicKey) {
         Intent intent = getIntent();
         String userID = intent.getStringExtra("userID");
 
-        Log.d(TAG, "ID: "+ userID);
-        SavePKRequest savepkRequest = new SavePKRequest(publicKeyString,userID, responseListner);
-        RequestQueue queue = Volley.newRequestQueue(BiometricActivity.this);
-        queue.add(savepkRequest);
-        Toast.makeText(getApplicationContext(), "공개키 저장이 완료되었습니다. ", Toast.LENGTH_SHORT).show();
+        String publicKeyString = Base64.encodeToString(publicKey.getEncoded(), Base64.NO_WRAP);
 
+        Response.Listener<String> responseListener = new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                try {
+                    JSONObject jsonObject = new JSONObject(response);
+                    boolean success = jsonObject.getBoolean("success");
+                    if (success) {
+                        Log.d(TAG, "공개키 전송 성공");
+                    } else {
+                        Log.d(TAG, "공개키 전송 실패");
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        Response.ErrorListener errorListener = new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e(TAG, "공개키 전송 에러: " + error.getMessage());
+            }
+        };
+        Log.d(TAG, "id :  "+ userID);
+        Log.d(TAG, "공개키 : "+publicKeyString);
+
+        SavePKRequest savePKRequest = new SavePKRequest( userID,publicKeyString, responseListener, errorListener);
+        RequestQueue queue = Volley.newRequestQueue(this);
+        queue.add(savePKRequest);
     }
 
     private CancellationSignal getCancellationSignal() {
